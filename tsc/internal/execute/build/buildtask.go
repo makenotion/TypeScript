@@ -74,6 +74,8 @@ type BuildTask struct {
 	isInitialCycle     bool
 	downStreamUpdateMu sync.Mutex
 	dirty              bool
+	// Set when the declaration pre-pass wrote this project's .d.ts ahead of the main pass.
+	dtsPrepassed atomic.Bool
 
 	contentMapperProjectOnce sync.Once
 	contentMapperProject     contentmapper.Project
@@ -148,8 +150,10 @@ func (t *BuildTask) report(orchestrator *Orchestrator, configPath tspath.Path, b
 }
 
 func (t *BuildTask) buildProject(orchestrator *Orchestrator, path tspath.Path) {
-	// Wait on upstream tasks to complete
-	t.waitOnUpstream()
+	// Wait on upstream tasks to complete, unless the pre-pass already wrote their .d.ts
+	if !t.canSkipUpstreamWait() {
+		t.waitOnUpstream()
+	}
 	if t.pending.Load() {
 		t.status = t.getUpToDateStatus(orchestrator, path)
 		t.reportUpToDateStatus(orchestrator)

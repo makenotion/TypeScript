@@ -669,6 +669,7 @@ func (o *Orchestrator) buildOrClean() tsc.CommandLineResult {
 	var buildResult orchestratorResult
 	if len(o.errors) == 0 {
 		buildResult.statistics.Projects = len(o.Order())
+		o.emitDeclarationsPrepass()
 		o.rangeTask(func(path tspath.Path, task *BuildTask) {
 			o.buildOrCleanProject(task, path, &buildResult)
 		})
