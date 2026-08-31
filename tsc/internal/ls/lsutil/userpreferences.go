@@ -33,6 +33,7 @@ func NewDefaultUserPreferences() UserPreferences {
 
 		ExcludeLibrarySymbolsInNavTo: core.TSTrue,
 		WorkspaceSymbolsScope:        WorkspaceSymbolsScopeAllOpenProjects,
+		WorkspaceDiagnosticsScope:    WorkspaceDiagnosticsScopeOff,
 	}
 }
 
@@ -171,6 +172,12 @@ type UserPreferences struct {
 	ExcludeLibrarySymbolsInNavTo core.Tristate         `raw:"excludeLibrarySymbolsInNavTo" config:"workspaceSymbols.excludeLibrarySymbols"`
 	WorkspaceSymbolsScope        WorkspaceSymbolsScope `config:"workspaceSymbols.scope"`
 
+	// ------- Diagnostics -------
+
+	// How much of the workspace a `workspace/diagnostic` pull reports on. Off unless asked for;
+	// the server only offers the capability once it is set to something else.
+	WorkspaceDiagnosticsScope WorkspaceDiagnosticsScope `config:"experimental.workspaceDiagnostics.scope"`
+
 	// ------- Misc -------
 
 	EnableFormatting            core.Tristate `raw:"formatEnabled" config:"format.enabled" fallbackConfig:"format.enable"`
@@ -235,6 +242,32 @@ const (
 	WorkspaceSymbolsScopeAllOpenProjects WorkspaceSymbolsScope = "allOpenProjects"
 	WorkspaceSymbolsScopeCurrentProject  WorkspaceSymbolsScope = "currentProject"
 )
+
+type WorkspaceDiagnosticsScope string
+
+const (
+	// The default: nothing is reported and the capability is not offered.
+	WorkspaceDiagnosticsScopeOff WorkspaceDiagnosticsScope = "off"
+	// Projects that contain an open file.
+	WorkspaceDiagnosticsScopeOpenProjects WorkspaceDiagnosticsScope = "openProjects"
+	// Also the projects that reference them, so an edit surfaces breakage in consumers.
+	WorkspaceDiagnosticsScopeOpenProjectsAndDependents WorkspaceDiagnosticsScope = "openProjectsAndDependents"
+	// Every project in the workspace.
+	WorkspaceDiagnosticsScopeAllProjects WorkspaceDiagnosticsScope = "allProjects"
+)
+
+// Enabled reports whether the scope asks for any workspace diagnostics. Unrecognized values are
+// treated as off, so a typo cannot start a workspace-wide check.
+func (s WorkspaceDiagnosticsScope) Enabled() bool {
+	switch s {
+	case WorkspaceDiagnosticsScopeOpenProjects,
+		WorkspaceDiagnosticsScopeOpenProjectsAndDependents,
+		WorkspaceDiagnosticsScopeAllProjects:
+		return true
+	default:
+		return false
+	}
+}
 
 const (
 	QuotePreferenceUnknown QuotePreference = ""
