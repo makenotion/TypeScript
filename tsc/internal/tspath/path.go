@@ -978,6 +978,11 @@ func EnsurePathIsNonModuleName(path string) string {
 	return path
 }
 
+// IsInsideNodeModules reports whether a normalized path lies within a node_modules directory.
+func IsInsideNodeModules(path string) bool {
+	return strings.Contains(path, "/node_modules/")
+}
+
 func IsExternalModuleNameRelative(moduleName string) bool {
 	// TypeScript 1.0 spec (April 2014): 11.2.1
 	// An external module name is "relative" if the first term is "." or "..".

@@ -2149,7 +2149,7 @@ func (p *Program) collectPackageNames() *packageNamesInfo {
 	return p.packageNames.getValue(func() *packageNamesInfo {
 		packageNames := &packageNamesInfo{&collections.Set[string]{}, &collections.Set[string]{}, &collections.Set[string]{}}
 		for _, file := range p.files {
-			if p.IsSourceFileDefaultLibrary(file.Path()) || p.IsSourceFileFromExternalLibrary(file) || strings.Contains(file.FileName(), "/node_modules/") {
+			if p.IsSourceFileDefaultLibrary(file.Path()) || p.IsSourceFileFromExternalLibrary(file) || tspath.IsInsideNodeModules(file.FileName()) {
 				// Checking for /node_modules/ is a little imprecise, but ATA treats locally installed typings
 				// as root files, which would not pass IsSourceFileFromExternalLibrary.
 				continue
