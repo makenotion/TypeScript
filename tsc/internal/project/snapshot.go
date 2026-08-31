@@ -119,6 +119,26 @@ func (s *Snapshot) GetProjectsContainingFile(uri lsproto.DocumentUri) []ls.Proje
 	return s.ProjectCollection.GetProjectsContainingFile(path)
 }
 
+// OpenProjects returns the projects that contain at least one file open in the editor.
+func (s *Snapshot) OpenProjects() []*Project {
+	var open []*Project
+	for _, project := range s.ProjectCollection.Projects() {
+		if s.ProjectCollection.isOpen(project) {
+			open = append(open, project)
+		}
+	}
+	return open
+}
+
+// ReleaseIdleDiagnosticsChecker drops the project's diagnostics checker to reclaim its memory. A
+// project with an open file keeps its checker, so that file's next pull stays warm.
+func (s *Snapshot) ReleaseIdleDiagnosticsChecker(project *Project) bool {
+	if project.checkerPool == nil || s.ProjectCollection.isOpen(project) {
+		return false
+	}
+	return project.checkerPool.releaseDiagnosticsChecker()
+}
+
 func (s *Snapshot) GetFile(fileName string) FileHandle {
 	return s.fs.GetFile(fileName)
 }

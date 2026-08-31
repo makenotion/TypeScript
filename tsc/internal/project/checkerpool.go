@@ -455,6 +455,21 @@ func (p *checkerPool) cleanupIdleCheckers() {
 	p.scheduleCleanupLocked()
 }
 
+// releaseDiagnosticsChecker disposes the diagnostics checker without waiting out the idle timeout,
+// for callers that have just swept a whole program. A checker in use is left alone. Global
+// diagnostics are merged into the pool on release, so they are not lost.
+func (p *checkerPool) releaseDiagnosticsChecker() bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	c := p.checkers[0]
+	if c == nil || p.heldBy[0] != "" {
+		return false
+	}
+	p.log("checkerpool: Releasing diagnostics checker on request")
+	p.disposeCheckerLocked(0, c)
+	return true
+}
+
 // disposeCheckerLocked removes a checker from the pool and clears all associations
 // (file and request) that reference it. Must be called with p.mu held.
 func (p *checkerPool) disposeCheckerLocked(index int, c *checker.Checker) {
